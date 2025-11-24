@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  kocky-app:
+    build: .
+    container_name: kocky-app
+    restart: always
+    ports:
+      - "6001:6001"
+    environment:
+      - DATABASE_URL=file:/app/db/prod.db
+      - NEXTAUTH_URL=http://localhost:6001
+      - NEXTAUTH_SECRET=supersecretkey123
+    volumes:
+      - ./db:/app/db
+    command: sh -c "npx prisma migrate deploy && node server.js"

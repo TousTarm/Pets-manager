@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  nickname     String?  // Display name with diacritics
+  passwordHash String
+  createdAt    DateTime @default(now())
+  events       Event[]
+}
+
+model Cat {
+  id             String   @id @default(cuid())
+  name           String   @unique
+  photoUrl       String?
+  currentLocation String  @default("Home") // Home, Outside, Garage
+  updatedAt      DateTime @updatedAt
+  events         Event[]
+}
+
+model Event {
+  id        String   @id @default(cuid())
+  type      String   // FEEDING, LOCATION
+  catId     String
+  userId    String
+  timestamp DateTime @default(now())
+  details   String?  // JSON string for extra details (e.g. food type)
+  
+  cat       Cat      @relation(fields: [catId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
