@@ -176,3 +176,76 @@ export async function getDayHistory(date: string) {
         details: event.details ? JSON.parse(event.details) : {}
     }))
 }
+
+// Vacation Mode Actions
+export async function getVacationDates() {
+    const session = await auth()
+    if (!session) throw new Error('Unauthorized')
+
+    const dates = await prisma.vacationDate.findMany({
+        orderBy: { date: 'asc' }
+    })
+
+    return dates
+}
+
+export async function addVacationDate(dateString: string) {
+    const session = await auth()
+    if (!session) throw new Error('Unauthorized')
+
+    const date = new Date(dateString)
+    date.setHours(0, 0, 0, 0)
+
+    await prisma.vacationDate.create({
+        data: { date }
+    })
+
+    revalidatePath('/')
+}
+
+export async function removeVacationDate(id: string) {
+    const session = await auth()
+    if (!session) throw new Error('Unauthorized')
+
+    await prisma.vacationDate.delete({
+        where: { id }
+    })
+
+    revalidatePath('/')
+}
+
+// Notification Subscription Actions
+export async function saveNotificationSubscription(subscription: any) {
+    const session = await auth()
+    if (!session || !session.user?.id) throw new Error('Unauthorized')
+
+    await prisma.notificationSubscription.upsert({
+        where: { endpoint: subscription.endpoint },
+        update: {
+            keys: JSON.stringify(subscription.keys)
+        },
+        create: {
+            userId: session.user.id,
+            endpoint: subscription.endpoint,
+            keys: JSON.stringify(subscription.keys)
+        }
+    })
+
+    return { success: true }
+}
+
+export async function getNotificationSubscription() {
+    const session = await auth()
+    if (!session || !session.user?.id) throw new Error('Unauthorized')
+
+    const subscription = await prisma.notificationSubscription.findFirst({
+        where: { userId: session.user.id }
+    })
+
+    if (!subscription) return null
+
+    return {
+        endpoint: subscription.endpoint,
+        keys: JSON.parse(subscription.keys)
+    }
+}

@@ -8,21 +8,22 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  username     String   @unique
-  nickname     String?  // Display name with diacritics
-  passwordHash String
-  createdAt    DateTime @default(now())
-  events       Event[]
+  id            String                     @id @default(cuid())
+  username      String                     @unique
+  nickname      String?                    // Display name with diacritics
+  passwordHash  String
+  createdAt     DateTime                   @default(now())
+  events        Event[]
+  subscriptions NotificationSubscription[]
 }
 
 model Cat {
-  id             String   @id @default(cuid())
-  name           String   @unique
-  photoUrl       String?
-  currentLocation String  @default("Home") // Home, Outside, Garage
-  updatedAt      DateTime @updatedAt
-  events         Event[]
+  id              String   @id @default(cuid())
+  name            String   @unique
+  photoUrl        String?
+  currentLocation String   @default("Home") // Home, Outside, Garage
+  updatedAt       DateTime @updatedAt
+  events          Event[]
 }
 
 model Event {
@@ -35,4 +36,20 @@ model Event {
   
   cat       Cat      @relation(fields: [catId], references: [id])
   user      User     @relation(fields: [userId], references: [id])
+}
+
+model VacationDate {
+  id        String   @id @default(cuid())
+  date      DateTime // Date when notifications are disabled
+  createdAt DateTime @default(now())
+}
+
+model NotificationSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  keys      String   // JSON string with p256dh and auth keys
+  createdAt DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

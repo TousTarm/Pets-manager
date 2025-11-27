@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { updateLocation, logFeeding, changePassword } from '../actions'
 import Calendar from './Calendar'
+import VacationMode from './VacationMode'
 import { useSession } from 'next-auth/react'
 
 export default function Dashboard({ cats, calendarDays, history, selectedDate }: {
@@ -15,7 +16,70 @@ export default function Dashboard({ cats, calendarDays, history, selectedDate }:
     const [newPassword, setNewPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
     const [showPasswordModal, setShowPasswordModal] = useState(false)
+    const [notificationsEnabled, setNotificationsEnabled] = useState(false)
     const { data: session } = useSession()
+
+    useEffect(() => {
+        // Check if notifications are already enabled
+        if ('Notification' in window && Notification.permission === 'granted') {
+            setNotificationsEnabled(true)
+        }
+    }, [])
+
+    const enableNotifications = async () => {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            alert('Push notifikace nejsou podporovány v tomto prohlížeči')
+            return
+        }
+
+        try {
+            // Request notification permission
+            const permission = await Notification.requestPermission()
+            if (permission !== 'granted') {
+                alert('Povolení notifikací bylo zamítnuto')
+                return
+            }
+
+            // Register service worker
+            const registration = await navigator.serviceWorker.register('/sw.js')
+            await navigator.serviceWorker.ready
+
+            // Subscribe to push notifications
+            const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_KEY || 'BL1Wa-aTdJ8SEqX6uCB-cIZnjlAL_iBXEgQUX4ispkmtz8L4mx0vRwOQkE8SzRqpwiQjlur0gCtzjq_GDH0u4ZM'
+            const subscription = await registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+            })
+
+            // Save subscription to server
+            const response = await fetch('/api/notifications/subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(subscription)
+            })
+
+            if (response.ok) {
+                setNotificationsEnabled(true)
+                alert('Notifikace byly úspěšně povoleny!')
+            } else {
+                throw new Error('Failed to save subscription')
+            }
+        } catch (error) {
+            console.error('Error enabling notifications:', error)
+            alert('Chyba při povolování notifikací')
+        }
+    }
+
+    function urlBase64ToUint8Array(base64String: string) {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4)
+        const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/')
+        const rawData = window.atob(base64)
+        const outputArray = new Uint8Array(rawData.length)
+        for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i)
+        }
+        return outputArray
+    }
 
     const handlePasswordChange = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -250,6 +314,30 @@ export default function Dashboard({ cats, calendarDays, history, selectedDate }:
                                 </div>
                             </div>
                         )}
+
+                        {/* Notifications */}
+                        <div style={{ marginBottom: '2rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
+                            <h4 style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                Notifikace
+                            </h4>
+                            <p style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', marginBottom: '1rem' }}>
+                                Upozornění v 18:30, pokud kočka není nakrmená
+                            </p>
+                            {notificationsEnabled ? (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem', background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.3)', borderRadius: 'var(--radius)' }}>
+                                    <span style={{ fontSize: '0.875rem', color: '#4ade80' }}>✓ Notifikace povoleny</span>
+                                </div>
+                            ) : (
+                                <button className="btn btn-primary" onClick={enableNotifications}>
+                                    Povolit notifikace
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Vacation Mode */}
+                        <div style={{ marginBottom: '2rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
+                            <VacationMode />
+                        </div>
 
                         {/* Sign out */}
                         <button

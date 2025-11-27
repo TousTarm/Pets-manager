@@ -27,12 +27,35 @@ const nextConfig = {
                     },
                     {
                         key: 'Referrer-Policy',
-                        value: 'origin-when-cross-origin'
+                        value: 'strict-origin-when-cross-origin'
+                    },
+                    {
+                        key: 'Permissions-Policy',
+                        value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()'
+                    },
+                    {
+                        key: 'Content-Security-Policy',
+                        value: [
+                            "default-src 'self'",
+                            "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+                            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+                            "font-src 'self' https://fonts.gstatic.com",
+                            "img-src 'self' data: https:",
+                            "connect-src 'self' https://kocky.rindt.space",
+                            "worker-src 'self' blob:",
+                            "frame-ancestors 'self'",
+                            "base-uri 'self'",
+                            "form-action 'self'"
+                        ].join('; ')
                     }
                 ]
             }
         ]
-    }
+    },
+    // Production optimizations
+    compress: true,
+    poweredByHeader: false,
+    reactStrictMode: true,
 }
 
 module.exports = nextConfig
