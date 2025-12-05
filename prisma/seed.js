@@ -1,5 +1,4 @@
 const { PrismaClient } = require('@prisma/client')
-const bcrypt = require('bcryptjs')
 
 const prisma = new PrismaClient()
 
@@ -26,7 +25,8 @@ async function main() {
     { username: 'honza', nickname: 'Honza' },
     { username: 'martina', nickname: 'Martina' }
   ]
-  const passwordHash = await bcrypt.hash('Abc12345', 10) // Password for all users
+  // Pre-calculated hash for 'Abc12345' to avoid bcryptjs dependency in seed script
+  const passwordHash = '$2b$10$AI57DW7pNQ32HMMxy2tCzuDXrZBKnIm3YE4Ic7DMshwnE3KPkrQWa'
 
   for (const user of users) {
     await prisma.user.upsert({
