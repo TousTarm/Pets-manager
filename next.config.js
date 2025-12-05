@@ -53,6 +53,7 @@ const nextConfig = {
         ]
     },
     // Production optimizations
+    output: 'standalone',
     compress: true,
     poweredByHeader: false,
     reactStrictMode: true,
