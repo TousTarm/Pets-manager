@@ -32,7 +32,16 @@ Edit `.env.production.local`:
 - Replace `GENERATE_STRONG_API_KEY_HERE` with generated NOTIFICATION_API_KEY
 - Verify `NEXTAUTH_URL=https://kocky.rindt.space`
 
-### 3. Build and Deploy
+### 3. Prepare Database Directory
+
+Ensure the database directory exists and has correct permissions for the Docker container user:
+
+```bash
+mkdir -p db
+chmod 777 db
+```
+
+### 4. Build and Deploy
 
 ```bash
 # Build the Docker image

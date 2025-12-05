@@ -11,6 +11,7 @@ services:
       - .env.production
     environment:
       - DATABASE_URL=file:/app/db/prod.db
+      - NEXTAUTH_URL=http://192.168.0.106:6001
     volumes:
       - ./db:/app/db
     command: sh -c "npx prisma@6 migrate deploy && npx prisma@6 db seed && node server.js"
