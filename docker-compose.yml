@@ -9,6 +9,8 @@ services:
       - "6001:6001"
     env_file:
       - .env.production
+    environment:
+      - DATABASE_URL=file:/app/db/prod.db
     volumes:
       - ./db:/app/db
     command: sh -c "npx prisma@6 migrate deploy && npx prisma@6 db seed && node server.js"
